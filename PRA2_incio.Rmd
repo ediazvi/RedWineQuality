@@ -1,0 +1,116 @@
+---
+title: 'Tipologia y ciclo de vida de los datos - PRA2'
+author: "Autor: Eduardo Diaz Villanueva"
+date: "Enero 2021"
+output:
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+  word_document: default
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Lectura de datos
+
+```{r }
+library(stringr)
+library(dplyr)
+library(ggplot2)
+
+# Limpiamos la aplicacion de datos anteriores y cargo el fichero.
+rm(list = ls())
+datos <- read.csv("winequality-red.csv", sep=",")
+datos_originales <- datos
+head(datos,5)
+```
+
+# Descripción del dataset.
+
+````{r }
+summary(datos)
+str(datos)
+
+#Tipo de dato asignado a cada campo
+sapply(datos, function(x) class(x))
+```
+
+# Integracion y seleccion de los datos de interes
+
+
+
+# Limpieza de los datos
+
+## Elementos vacios
+
+````{r }
+sapply(datos, function(x) sum(is.na(x)))
+```
+
+
+## Valores extremos 
+
+````{r }
+boxplot(x=datos[,1:5],main="Boxplots datos")
+boxplot(x=datos[,6:7],main="Boxplots datos")
+boxplot(x=datos[,7:12],main="Boxplots datos")
+
+
+par(mfrow=c(1,2))
+hist(datos$fixed.acidity)
+boxplot(datos$fixed.acidity,main="fixed.acidity", col="gray")
+boxplot.stats(datos$fixed.acidity)$out
+
+```
+
+
+# Analisis
+
+Antes de comenzar con el analisis guardaremos una copia de los datos despues del proceso de limpieza
+
+````{r }
+# Exportación de los datos limpios en .csv
+write.csv(datos, "datos_data_clean.csv")
+
+```
+
+
+## Seleccion grupo de datos
+
+````{r }
+
+```
+
+
+## Comprobación de la normalidad y homogeneidad de la varianza.
+
+````{r }
+
+```
+
+## Aplicación de pruebas estadísticas para comparar los grupos de datos
+
+````{r }
+
+```
+
+
+# Representación de los resultados
+
+````{r }
+
+```
+
+# Resolución del problema
+
+````{r }
+
+```
