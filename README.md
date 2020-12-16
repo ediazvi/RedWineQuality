@@ -8,7 +8,7 @@ Este proyecto corresponde al ejercicio de la practica de las asignatura Tipolog√
 
 ## Miembros del equipo
 
-Este proyecto ha sido realizado conjuntamente por Angel Bustamante y Eduardo Diaz.
+Este proyecto ha sido realizado conjuntamente por ... y Eduardo Diaz.
 
 
 ## Ficheros
