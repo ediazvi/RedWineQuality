@@ -83,9 +83,9 @@ Observamos la variable Citric.acid con una gran cantidad de valores 0.
 ````{r }
 boxplot(x=datos[,1:11],main="Boxplots datos")
 
-boxplot(x=datos[,1:5],main="Boxplots datos")
-boxplot(x=datos[,6:7],main="Boxplots datos")
-boxplot(x=datos[,8:12],main="Boxplots datos")
+#boxplot(x=datos[,1:5],main="Boxplots datos")
+#boxplot(x=datos[,6:7],main="Boxplots datos")
+#boxplot(x=datos[,8:12],main="Boxplots datos")
 
 
 par(mfrow=c(1,2))
