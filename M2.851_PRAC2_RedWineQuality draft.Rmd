@@ -1,6 +1,6 @@
 ---
 title: 'Tipologia y ciclo de vida de los datos - PRA2'
-author: "Autor: Eduardo Diaz Villanueva"
+author: "Autor: Eduardo Diaz Villanueva e Ignasi Domingo González"
 date: "Enero 2021"
 output:
   pdf_document:
@@ -19,21 +19,27 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Lectura de datos
+
+# Descripción del dataset.
 
 ```{r }
 library(stringr)
 library(dplyr)
 library(ggplot2)
+library(corrplot)
+
 
 # Limpiamos la aplicacion de datos anteriores y cargo el fichero.
 rm(list = ls())
 datos <- read.csv("winequality-red.csv", sep=",")
 datos_originales <- datos
+
+#shape(datos)
+#describe(datos)
+
 head(datos,5)
 ```
 
-# Descripción del dataset.
 El dataset seleccionado contiene 11 variables que describen las propiedades quimicas de un vino, como puede ser la acided, ph nivel de azucar, etc... estas variables tendran influencia en la calidad final del vino.
 
 Con este ejercicio queremos estudiar que variables son mas representativas y encontrar modelos que puedan predecir la calidad del vino.
@@ -42,7 +48,7 @@ Si pensamos por ejemplo en una industria, podriamos reducir el tiempo y coste re
 
 # Integracion y seleccion de los datos de interes
 
-Realizaremos un primer analisis estadistico para familiarizarnos con las variables.
+Realizaremos un primer analisis estadistico para familiarizarnos con las variables y sus tipos de datos.
 ````{r }
 summary(datos)
 str(datos)
@@ -51,15 +57,13 @@ str(datos)
 sapply(datos, function(x) class(x))
 ```
 
-````{r }
-
-```
+Observamos que los tipos de datos asignados a las variables corresponden con las variables que representan.
 
 # Limpieza de los datos
 
 ## Elementos vacios
 
-Analizamos los valores para detectar falta o ausencia de daos
+Analizamos los valores de las variables para detectar falta o ausencia de datos
 ````{r }
 # Analizamos la existencia de datos NA
 colSums(is.na(datos))
@@ -80,13 +84,9 @@ Observamos la variable Citric.acid con una gran cantidad de valores 0.
 
 ## Valores extremos 
 
+Analizaremos individualmente cada una de las variables focalizandonos en la distribucion de los datos y sus valores extremos.
+
 ````{r }
-boxplot(x=datos[,1:11],main="Boxplots datos")
-
-#boxplot(x=datos[,1:5],main="Boxplots datos")
-#boxplot(x=datos[,6:7],main="Boxplots datos")
-#boxplot(x=datos[,8:12],main="Boxplots datos")
-
 
 par(mfrow=c(1,2))
 hist(datos$fixed.acidity)
@@ -133,7 +133,6 @@ hist(datos$pH)
 boxplot(datos$pH,main="pH", col="gray")
 boxplot.stats(datos$pH)$out
 
-
 par(mfrow=c(1,2))
 hist(datos$sulphates)
 boxplot(datos$sulphates,main="sulphates", col="gray")
@@ -149,9 +148,7 @@ hist(datos$quality)
 boxplot(datos$quality,main="quality", col="gray")
 boxplot.stats(datos$quality)$out
 
-
 ```
-
 
 
 # Analisis
@@ -159,7 +156,7 @@ boxplot.stats(datos$quality)$out
 Antes de comenzar con el analisis guardaremos una copia de los datos despues del proceso de limpieza
 ````{r }
 # Exportación de los datos limpios en .csv
-write.csv(datos, "datos_data_clean.csv")
+write.csv(datos, "RedWinQuality_clean.csv")
 
 ```
 
@@ -193,25 +190,80 @@ boxplot(formula = datos$alcohol ~ datos$quality, main="alcohol vs quality", col=
 
 
 
-
 ## Seleccion grupo de datos
 
+De la observacion del grupo de datos nos interesa seleccionar los que pudieran tener una mayor relacion con el resultado de calidad. Por ello vamos a seleccionar las que se intuye una cierta relacion lineal para poder apolicar modelos de prediccion.
+
+las variables fixed acidity, citrix acid , alcohol y sulfates conforme aunmentan, aumenta el valor de la calidad. 
+Por el contrario para que aumente el valor de la calidad es necesario que disminuyan volatile acidity, density y pH.
+
+Crearemos un subconjunto de datos con estas cinco variables
 ````{r }
+subdatos <- select(datos, fixed.acidity, volatile.acidity, citric.acid, sulphates, alcohol)
 
 ```
 
 
 ## Comprobación de la normalidad y homogeneidad de la varianza.
 
+Comprobaremos la normalidad de los datos y ejecutaremos el test.
 
-```{r ,eval=TRUE,echo=TRUE}
-shapiro.test(datos$fixed.acidity)
+````{r }
+
+par(mfrow=c(3,4))
+for (i in 1:(ncol(datos)-1)) {
+  qqnorm(datos[,i], main = colnames(datos[i]))
+  qqline(datos[,i])
+}
+
 ```
 
+Dado que los grupos tienen mas de 50 eventos se emplea el test de Kolmogorov-Smirnov con la corrección de Lilliefors. La función en R se llama lillie.test() y se encuentra en el paquete nortest. Si fuesen menos de 50 eventos por grupo se emplearía el test Shapiro-Wilk.
 
-El test nos indica que ninguna variable esta normalizada, ya que el p-valor es inferior al coeficiente 0.05, por lo que se puede rechazar la hipotesis nula y entender que no es normal.
+```{r ,eval=TRUE,echo=TRUE}
+# Test de Shapiro
+#shapiro.test(datos$fixed.acidity)
 
-Que no sea normal no quiere decir que no pueda ser normalizable, ya que segun el teorema del limite central al tener mas de 30 elementos en las observaciones podemos aproximarla como una distribución normal de media 0 y desviación estandard 1.
+
+# Test de Kolmogorov
+
+library("nortest")
+kol <- lillie.test(x = datos$quality)
+
+
+# Creamos la matriz para almacenar los datos
+matrixkol <- matrix(nc = 3, nr = 0)
+colnames(matrixkol) <- c("Variable","TestKol","p-value")
+
+# Recorremos el dataset ejecutando el test
+for (i in 1:(ncol(datos)-1)) {
+  
+  kol <- lillie.test(x = datos[,i])
+  # Añadimos los datos a la matriz
+  pair = matrix(ncol = 3, nrow = 1)
+  pair[1][1] = colnames(datos[i])
+  pair[2][1] = kol[1]
+  pair[3][1] = kol[2]
+  matrixkol <- rbind(matrixkol, pair)
+}
+
+# Ordenamos por el valor de correlacion
+#matrixkol[order(matrixkol[,"correlacion"]), ]
+matrixkol
+
+```
+
+Una vez comprobada la normalidad de los datos, realizaremos un analisis de la varianza.
+
+```{r ,eval=TRUE,echo=TRUE}
+#anova <- aov(datos$bateo ~ datos$posicion)
+#summary(anova)
+##                 Df Sum Sq  Mean Sq F value Pr(>F)
+## datos$posicion   3 0.0076 0.002519   1.994  0.115
+## Residuals      323 0.4080 0.001263
+#plot(anova)
+
+```
 
 
 
@@ -222,7 +274,56 @@ Que no sea normal no quiere decir que no pueda ser normalizable, ya que segun el
 
 ## Aplicación de pruebas estadísticas para comparar los grupos de datos
 
+
+Analicemos ahora los valores de correlacion de las varables con la varible quality y la ordenamos 
+
 ````{r }
+# Visualizaremos la matriz de correlacion de variables
+correlacion<-round(cor(datos), 1)
+corrplot(correlacion, method="number", type="upper")
+
+```
+
+Guardaremos los datos de correlacion en una matriz ordenada para decir que variables utilizar en siguientes estudios
+
+````{r }
+# Creamos la matriz para almacenar los datos
+matrixcor <- matrix(nc = 2, nr = 0)
+colnames(matrixcor) <- c("Variable","correlacion")
+
+# Recorremos el dataset ejecutando el test
+for (i in 1:(ncol(datos)-1)) {
+  
+  coef <- cor(x=datos$quality, y = datos[,i], method="spearman")
+  # Añadimos los datos a la matriz
+  pair = matrix(ncol = 2, nrow = 1)
+  pair[1][1] = colnames(datos[i])
+  pair[2][1] = coef
+  matrixcor <- rbind(matrixcor, pair)
+}
+
+# Ordenamos por el valor de correlacion
+matrixcor[order(matrixcor[,"correlacion"]), ]
+```
+
+Con este grupo de datos y las relaciones observadas tanto en las graficas de caja como los datos de correlacion estimaremos por mínimos cuadrados ordinarios un modelo lineal que explique la variable quality
+
+````{r }
+# Estimar 
+modelo <- (lm(formula = quality ~ fixed.acidity + citric.acid + alcohol + sulphates + volatile.acidity + density + pH, data = datos))
+summary(modelo)
+
+```
+
+
+````{r }
+
+# La interpretacion del modelo seria
+ 
+#y <- 23.89874 + (0.06451 * fixed.acidity) - (0.48194 * citric.acid) + (0.30768 * alcohol) + (0.71648 * sulphates) - (1.30791  * volatile.acidity) - (21.23262 * density) - (0.14902 * pH)
+
+```
+
 
 ```
 
