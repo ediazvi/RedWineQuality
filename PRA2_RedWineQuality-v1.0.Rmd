@@ -3,16 +3,16 @@ title: 'Tipologia y ciclo de vida de los datos - PRA2'
 author: "Autor: Eduardo Diaz Villanueva e Ignasi Domingo González"
 date: "Enero 2021"
 output:
-  pdf_document:
-    highlight: zenburn
-    toc: yes
-  word_document: default
   html_document:
     highlight: default
     number_sections: yes
     theme: cosmo
     toc: yes
     toc_depth: 2
+  word_document: default
+  pdf_document:
+    highlight: zenburn
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -24,7 +24,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r }
 # Cargamos las diferentes librerias que utilizaremos.
-packages = c('stringr', 'dplyr', 'ggplot2', 'corrplot', 'car', 'vcd', 'rpart', 'rpart.plot', 'tidyverse', 'caret' )
+packages = c('stringr', 
+             'dplyr', 
+             'ggplot2', 
+             'corrplot', 
+             'car', 
+             'vcd', 
+             'rpart', 
+             'rpart.plot', 
+             'tidyverse', 
+             'caret' )
 
 for(p in packages){
   if(!require(p, character.only = T)){
@@ -33,9 +42,7 @@ for(p in packages){
   library(p, character.only = T)
 }
 
-
 ```
-
 
 ```{r }
 # Limpiamos la aplicación de datos anteriores y cargo el fichero.
@@ -210,7 +217,8 @@ for ( i in 1:11 ) {
 }
 mod = lm(quality ~ ., data = datos)
 cooksd = cooks.distance(mod)
-plot(cooksd, pch = "*", cex = 2, main = "Observaciones relevantes en función de la distancia de Cook")
+plot(cooksd, pch = "*", cex = 2, 
+     main = "Observaciones relevantes en función de la distancia de Cook")
 abline(h = 4*mean(cooksd, na.rm = T), col = "red")
 ```
 ````{r }
@@ -246,17 +254,28 @@ write.csv(datos_clean, "winequality-red-clean.csv")
 ```
 Analizaremos las variables frente a la calidad para decidir cuales utilizar en el resto del análisis
 ````{r }
-boxplot(formula = datos_clean$fixed.acidity ~ datos_clean$quality, main="fixed.acidity vs quality", col="lightblue")
-boxplot(formula = datos_clean$volatile.acidity ~ datos_clean$quality, main="volatile.acidity vs quality", col="lightblue")
-boxplot(formula = datos_clean$citric.acid ~ datos_clean$quality, main="citric.acid vs quality", col="lightblue")
-boxplot(formula = datos_clean$residual.sugar ~ datos_clean$quality, main="residual.sugar vs quality", col="lightblue")
-boxplot(formula = datos_clean$chlorides ~ datos_clean$quality, main="chlorides vs quality", col="lightblue")
-boxplot(formula = datos_clean$free.sulfur.dioxide ~ datos_clean$quality, main="free.sulfur.dioxide vs quality", col="lightblue")
-boxplot(formula = datos_clean$total.sulfur.dioxide ~ datos_clean$quality, main="total.sulfur.dioxide vs quality", col="lightblue")
-boxplot(formula = datos_clean$density ~ datos_clean$quality, main="density vs quality", col="lightblue")
-boxplot(formula = datos_clean$pH ~ datos_clean$quality, main="pH vs quality", col="lightblue")
-boxplot(formula = datos_clean$sulphates ~ datos_clean$quality, main="sulphates vs quality", col="lightblue")
-boxplot(formula = datos_clean$alcohol ~ datos_clean$quality, main="alcohol vs quality", col="lightblue")
+boxplot(formula = datos_clean$fixed.acidity ~ datos_clean$quality, 
+        main="fixed.acidity vs quality", col="lightblue")
+boxplot(formula = datos_clean$volatile.acidity ~ datos_clean$quality, 
+        main="volatile.acidity vs quality", col="lightblue")
+boxplot(formula = datos_clean$citric.acid ~ datos_clean$quality, 
+        main="citric.acid vs quality", col="lightblue")
+boxplot(formula = datos_clean$residual.sugar ~ datos_clean$quality, 
+        main="residual.sugar vs quality", col="lightblue")
+boxplot(formula = datos_clean$chlorides ~ datos_clean$quality, 
+        main="chlorides vs quality", col="lightblue")
+boxplot(formula = datos_clean$free.sulfur.dioxide ~ datos_clean$quality, 
+        main="free.sulfur.dioxide vs quality", col="lightblue")
+boxplot(formula = datos_clean$total.sulfur.dioxide ~ datos_clean$quality, 
+        main="total.sulfur.dioxide vs quality", col="lightblue")
+boxplot(formula = datos_clean$density ~ datos_clean$quality, 
+        main="density vs quality", col="lightblue")
+boxplot(formula = datos_clean$pH ~ datos_clean$quality, 
+        main="pH vs quality", col="lightblue")
+boxplot(formula = datos_clean$sulphates ~ datos_clean$quality, 
+        main="sulphates vs quality", col="lightblue")
+boxplot(formula = datos_clean$alcohol ~ datos_clean$quality, 
+        main="alcohol vs quality", col="lightblue")
 ```
 ## Seleccion grupo de datos
 De la observación del grupo de datos nos interesa seleccionar los que pudieran tener una mayor relación con el resultado de calidad. Por ello vamos a seleccionar las que se intuye una cierta relación lineal para poder aplicar modelos de predicción.
@@ -265,7 +284,13 @@ Por el contrario para que aumente el valor de la calidad es necesario que dismin
 Crearemos un subconjunto de datos con estas cinco variables
 ````{r }
 
-subdatos <- select(datos_clean, volatile.acidity, citric.acid, sulphates, alcohol, density, quality)
+subdatos <- select(datos_clean, 
+                   volatile.acidity, 
+                   citric.acid, 
+                   sulphates, 
+                   alcohol, 
+                   density, 
+                   quality)
 ```
 
 
@@ -275,7 +300,8 @@ Existen diferentes maneras de comprobar la normalidad de los datos, la del test 
 # Gráficas QQ de comprobación de normalidad e histogramas
 par(mfrow=c(3,2))
 for (i in 1:(ncol(subdatos)-1)) {
-  hist(subdatos[[i]], xlab = names(subdatos)[i], col = 'lightblue', main = paste("Average =", signif(mean(subdatos[[i]]),3)), breaks = 50)
+  hist(subdatos[[i]], xlab = names(subdatos)[i], col = 'lightblue', 
+       main = paste("Average =", signif(mean(subdatos[[i]]),3)), breaks = 50)
   qqnorm(subdatos[,i], main = colnames(subdatos[i]))
   qqline(subdatos[,i])
   
@@ -303,8 +329,7 @@ Para la verificación de la homocedasticidad, vamos a utilizar el test de Fligne
 El test asume como hipótesis nula la igualdad de varianzas en los diferentes grupos de datos.
 
 ````{r }
-# Visualización de las distribuciones de datos de densidad en función de la calidad del vino.
-#library(car)
+# Visualización de las distribuciones de datos de densidad en función de la calidad.
 fligner.test(volatile.acidity ~ quality, data = subdatos)
 fligner.test(citric.acid ~ quality, data = subdatos)
 fligner.test(sulphates ~ quality, data = subdatos)
@@ -320,7 +345,7 @@ Como tenemos que comparar datos de dos conjuntos, vamos a crear un subconjunto d
 
 
 ````{r }
-# Visualización de las distribuciones de datos de densidad en función de la calidad del vino.
+# Visualización de las distribuciones de datos de densidad en función de la calidad.
 ggplot(data = subdatos, aes(x = quality, y = density, colour = quality, group=quality)) +
   geom_boxplot() +
   geom_point() +
@@ -330,7 +355,8 @@ ggplot(data = subdatos, aes(x = quality, y = density, colour = quality, group=qu
 # Selección de los conjuntos a comparar según la calidad del vino.
 calidad <- filter(.data = subdatos, quality %in% c("4", "7"))
 
-# Test que nos permite comprobar si se observan diferencias estadísticamente significativas de la densidad entre vinos de diferentes calidades escogidos.
+# Test que nos permite comprobar si se observan diferencias estadísticamente 
+# significativas de la densidad entre vinos de diferentes calidades escogidos.
 t.test(density ~ quality, data = calidad)
 
 
@@ -342,7 +368,7 @@ Para el resto de variables, podemos aplicar las pruebas de Wilcox, ya que no req
 Vamos a ver la como lo aplicamos para la variable "alcohol".
 
 ````{r }
-# Visualización de las distribuciones de datos de densidad en función de la calidad del vino.
+# Visualización de las distribuciones de datos de densidad en función de la calidad.
 
 ggplot(data = subdatos, aes(x = quality, y = alcohol, colour = quality, group=quality)) +
   geom_boxplot() +
@@ -353,7 +379,8 @@ ggplot(data = subdatos, aes(x = quality, y = alcohol, colour = quality, group=qu
 # Selección de los conjuntos a comparar según la calidad del vino.
 calidad <- filter(.data = subdatos, quality %in% c("4", "7"))
 
-# Test que nos permite comprobar si se observan diferencias estadísticamente significativas de la densidad entre vinos de diferentes calidades escogidos.
+# Test que nos permite comprobar si se observan diferencias estadísticamente 
+# significativas de la densidad entre vinos de diferentes calidades escogidos.
 wilcox.test(alcohol ~ quality, data = calidad)
 
 
@@ -378,7 +405,7 @@ correlacion_dc<-round(cor(datos_clean), 1)
 corrplot(correlacion_dc, method="number", type="upper")
 ```
 ````{r }
-# Visualizaremos la matriz de correlación de las variables seleccionadas en nuestro subconjunto.
+# Visualizaremos la matriz de correlación de las variables del subconjunto seleccionado.
 correlacion_sc<-round(cor(subdatos), 1)
 corrplot(correlacion_sc, method="number", type="upper")
 ```
@@ -423,7 +450,8 @@ summary(modelo)
 Podemos observar que las variables "citric.acid" y "density" son variables poco significativas para el modelo. Con un valor de R cuadraddo ajustado del 37.69%. Si lo comparamos con la tabla de correlación, solo se han considerado las variables con un valor de correlación superior a 0.3
 ````{r }
 # Creamos un modelo reducido 
-modelo_reducido <- (lm(formula = quality ~ alcohol + sulphates + volatile.acidity, data = subdatos))
+modelo_reducido <- (lm(formula = quality ~ alcohol + sulphates + volatile.acidity, 
+                       data = subdatos))
 summary(modelo_reducido)
 ```
 Como podemos observar, todas las variables utilizadas se consideran significativas, y la exclusión de las tres variables no significativas respecto al modelo anterior no ha supuesto una merma relevante en la calidad del modelo, con estas tres variables podemos explicar el 37.56% de la clasificación de quality.
@@ -449,7 +477,8 @@ test_data <- subdatos[-trainIndex, ]
 
 
 # Creamos un modelo reducido 
-modelo_reducido_lm <- (lm(formula = quality ~ alcohol + sulphates + volatile.acidity, data = train_data))
+modelo_reducido_lm <- (lm(formula = quality ~ alcohol + sulphates + volatile.acidity, 
+                          data = train_data))
 summary(modelo_reducido_lm)
 
 # Predicción sobre los datos de test
@@ -457,13 +486,18 @@ predicciones_lm <- predict(modelo_reducido_lm, test_data)
 plot(test_data$quality, predicciones_lm)
 
 # Creamos la matriz de confusión de los valores
-matriz_confusion_lm <- table(test_data$quality , round(predicciones_lm), dnn = c("observaciones", "predicciones"))
+matriz_confusion_lm <- table(test_data$quality , 
+                             round(predicciones_lm), 
+                             dnn = c("observaciones", "predicciones"))
 matriz_confusion_lm
 
 # Matriz de confusión del modelo de regresión lineal con los tres parámetros significativos.
-mosaic(matriz_confusion_lm, shade = T, colorize = T, gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
-                                                                              "red2",   "red2",     "green3", "red2",   "red2", 
-                                                                              "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
+mosaic(matriz_confusion_lm, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",
+                                 "red2",   "red2",     "green3", "red2",   "red2", 
+                                 "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
 ```
 Podemos observar que los valores obtenidos en la predicción están dentro del rango de valores esperado, por lo que el modelo está realizando correctamente los cálculos.
 En este caso observamos a partir de la matriz de confusión como el modelo tiene aproximadamente un 62% de acierto en la predicción.
@@ -479,7 +513,8 @@ Con el objetivo de tener un modelo que nos permitiera tener un control de calida
 # Creamos una variable calidad de tipo factor
 subdatos$quality_factor <- as.factor(subdatos$quality)
 
-# Creamos un variable calidad binomial donde especificamos que queremos vinos con valoraciones de 6 o más.
+# Creamos un variable calidad binomial donde especificamos que queremos vinos 
+# con valoraciones de 6 o más.
 subdatos$category[subdatos$quality < 6] <- 0
 subdatos$category[subdatos$quality >= 6] <- 1
 subdatos$category <- as.factor(subdatos$category)
@@ -488,7 +523,8 @@ subdatos$category <- as.factor(subdatos$category)
 Creamos el modelo de regresión logística
 ````{r }
 # Generamos el modelo con las variables seleccionadas
-modelo_log <- glm(category ~ alcohol + sulphates + volatile.acidity, data = subdatos, family = "binomial")
+modelo_log <- glm(category ~ alcohol + sulphates + volatile.acidity, 
+                  data = subdatos, family = "binomial")
 summary(modelo_log)
 ```
 
@@ -496,12 +532,17 @@ summary(modelo_log)
 Creamos la tabla de confusión correspondiente al modelo.
 ```{r }
 predicciones <- ifelse(test = modelo_log$fitted.values > 0.5, yes = 1, no = 0)
-matriz_confusion <- table(modelo_log$model$category , predicciones, dnn = c("observaciones", "predicciones"))
+matriz_confusion <- table(modelo_log$model$category , 
+                          predicciones, 
+                          dnn = c("observaciones", "predicciones"))
 matriz_confusion
 ```
 Visualizamos los resultados.
 ```{r }
-mosaic(matriz_confusion, shade = T, colorize = T, gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
+mosaic(matriz_confusion, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
 
 ```
 El modelo de regresión logística nos ha dado un resultado de predicción de un 73% de acierto.
@@ -521,7 +562,8 @@ train_data <- subdatos[trainIndex, ]
 test_data <- subdatos[-trainIndex, ]
 
 # Generamos nuestro modelo de regresión logística con las variables escogidas
-modelo_reducido_glm <- glm(quality ~ alcohol + sulphates + volatile.acidity, data = train_data, family = "gaussian")
+modelo_reducido_glm <- glm(quality ~ alcohol + sulphates + volatile.acidity, 
+                           data = train_data, family = "gaussian")
 summary(modelo_reducido_glm)
 
 ```
@@ -534,13 +576,18 @@ predicciones_glm <- predict(modelo_reducido_glm, test_data)
 plot(test_data$quality, predicciones_glm)
 
 # Creamos la matriz de confusión de los valores
-matriz_confusion_glm <- table(test_data$quality , round(predicciones_glm), dnn = c("observaciones", "predicciones"))
+matriz_confusion_glm <- table(test_data$quality , 
+                              round(predicciones_glm), 
+                              dnn = c("observaciones", "predicciones"))
 matriz_confusion_glm
 
 # Visualizamos la matriz de confusión
-mosaic(matriz_confusion_glm, shade = T, colorize = T, gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
-                                                                              "red2",   "red2",     "green3", "red2",   "red2", 
-                                                                              "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
+mosaic(matriz_confusion_glm, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
+                                 "red2",   "red2",     "green3", "red2",   "red2", 
+                                 "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
 
 
 ```
@@ -584,7 +631,10 @@ prediccion <- predict(arbol, newdata = datos_test, type = "class")
 confusionMatrix(prediccion, datos_test[["category"]])
 confusionMatrix_table <- confusionMatrix(prediccion, datos_test[["category"]])$table
 
-mosaic(confusionMatrix_table, shade = T, colorize = T, gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
+mosaic(confusionMatrix_table, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
 ```
 Vemos que la precisión del modelo es 69.73%. Con un valor del factor Kappa de 0.3946
 
@@ -601,11 +651,16 @@ Hemos analizado la distribución de los datos en función de la variable "qualit
 ````{r }
 par(mfrow=c(2,3))
 
-boxplot(formula = datos_clean$sulphates ~ datos_clean$quality, main="sulphates vs quality", col="lightblue")
-boxplot(formula = datos_clean$alcohol ~ datos_clean$quality, main="alcohol vs quality", col="lightblue")
-boxplot(formula = datos_clean$citric.acid ~ datos_clean$quality, main="citric.acid vs quality", col="lightblue")
-boxplot(formula = datos_clean$volatile.acidity ~ datos_clean$quality, main="volatile.acidity vs quality", col="lightblue")
-boxplot(formula = datos_clean$density ~ datos_clean$quality, main="density vs quality", col="lightblue")
+boxplot(formula = datos_clean$sulphates ~ datos_clean$quality, 
+        main="sulphates vs quality", col="lightblue")
+boxplot(formula = datos_clean$alcohol ~ datos_clean$quality, 
+        main="alcohol vs quality", col="lightblue")
+boxplot(formula = datos_clean$citric.acid ~ datos_clean$quality, 
+        main="citric.acid vs quality", col="lightblue")
+boxplot(formula = datos_clean$volatile.acidity ~ datos_clean$quality, 
+        main="volatile.acidity vs quality", col="lightblue")
+boxplot(formula = datos_clean$density ~ datos_clean$quality, 
+        main="density vs quality", col="lightblue")
 
 ```
 Hemos analizado la normalidad y homocedasticidad de los datos de este subconjunto.
@@ -614,7 +669,11 @@ Hemos analizado la normalidad y homocedasticidad de los datos de este subconjunt
 # Gráficas QQ de comprobación de normalidad e histogramas
 par(mfrow=c(3,2))
 for (i in 1:5) {
-  hist(subdatos[[i]], xlab = names(subdatos)[i], col = 'lightblue', main = paste("Average =", signif(mean(subdatos[[i]]),3)), breaks = 50)
+  hist(subdatos[[i]], 
+       xlab = names(subdatos)[i], 
+       col = 'lightblue', 
+       main = paste("Average =", signif(mean(subdatos[[i]]),3)), 
+       breaks = 50)
   qqnorm(subdatos[,i], main = colnames(subdatos[i]))
   qqline(subdatos[,i])
   
@@ -636,18 +695,24 @@ Con estas variables hemos realizado varios modelos.
 
 ````{r }
 # Matriz de confusión del modelo de regresión lineal con los tres parámetros significativos.
-mosaic(matriz_confusion_lm, shade = T, colorize = T, gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
-                                                                              "red2",   "red2",     "green3", "red2",   "red2", 
-                                                                              "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
+mosaic(matriz_confusion_lm, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
+                                 "red2",   "red2",     "green3", "red2",   "red2", 
+                                 "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
 ```
 En este caso observamos a partir de la matriz de confusión como el modelo tiene aproximadamente un 62% de acierto en la predicción.
 
 
 ````{r }
 # Matriz de confusión del modelo de regresión logística con los tres parámetros significativos.
-mosaic(matriz_confusion_glm, shade = T, colorize = T, gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
-                                                                              "red2",   "red2",     "green3", "red2",   "red2", 
-                                                                              "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
+mosaic(matriz_confusion_glm, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("red2",   "green3",   "red2",   "red2",   "red2",  
+                                 "red2",   "red2",     "green3", "red2",   "red2", 
+                                 "red2",   "red2",     "red2",   "green3", "red2"), 5, 3)))
 
 ```
 En este caso observamos a partir de la matriz de confusión como el modelo tiene un 61,34% de acierto en la predicción.
@@ -657,8 +722,12 @@ Ambos modelos de regresión nos das resultados muy similares.
 Vamos a probar con un modelo de clasificación por árbol de decisión.
 
 ````{r }
-# Matriz de confusión del modelo de clasificación por árbol de decisión con los tres parámetros significativos
-mosaic(confusionMatrix_table, shade = T, colorize = T, gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
+# Matriz de confusión del modelo de clasificación por árbol de decisión con los tres 
+# parámetros significativos
+mosaic(confusionMatrix_table, 
+       shade = T, 
+       colorize = T, 
+       gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
 ```
 Vemos que en este caso hemos mejorado la precisión del modelo al aumentarla hasta el 69.73%.
 
