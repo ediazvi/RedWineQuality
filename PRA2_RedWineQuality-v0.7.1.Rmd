@@ -1,0 +1,490 @@
+---
+title: 'Tipologia y ciclo de vida de los datos - PRA2'
+author: "Autor: Eduardo Diaz Villanueva e Ignasi Domingo González"
+date: "Enero 2021"
+output:
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+  word_document: default
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Descripción del dataset.
+
+```{r }
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+# Limpiamos la aplicacion de datos anteriores y cargo el fichero.
+rm(list = ls())
+datos <- read.csv("winequality-red.csv", sep=",")
+datos_originales <- datos
+#shape(datos)
+#describe(datos)
+head(datos,5)
+```
+
+El dataset seleccionado contiene 11 variables que describen las propiedades químicas de un vino, como puede ser la acidez, ph nivel de azúcar, etc... estas variables tendrán influencia en la calidad final del vino. Además contiene un atributo que es la calidad del vino, como ha sido clasificado.
+
+Con este ejercicio queremos estudiar que variables son mas representativas y encontrar modelos que puedan predecir la calidad del vino.
+
+Si pensamos por ejemplo en una industria, podríamos reducir el tiempo y coste reduciendo el numero de pruebas de calidad a las variables mas significativas. Incluso mejorar la calidad del producto final, focalizando esfuerzos y recursos a reducir la variabilidad de las variables que mas contribuyan a la calidad final.
+
+# Integracion y seleccion de los datos de interes
+
+Realizaremos un primer análisis estadístico para familiarizarnos con las variables y sus tipos de datos.
+````{r }
+#Resumen del conjunto de datos.
+summary(datos)
+# Visualización de los primeros valores de cada atributo.
+str(datos)
+#Tipo de dato asignado a cada campo
+sapply(datos, function(x) class(x))
+```
+Observamos que los tipos de datos asignados a las variables corresponden con las variables que representan.
+# Limpieza de los datos
+## Elementos vacios
+Analizamos los valores de las variables para detectar falta o ausencia de datos
+````{r }
+# Analizamos la existencia de datos NA
+colSums(is.na(datos))
+```
+````{r }
+# Analizamos la existencia de datos vacios
+colSums(datos=="")
+```
+````{r }
+# Analizamos la existencia de datos con valor 0
+colSums(datos==0)
+```
+Observamos la variable "Citric.acid" con una gran cantidad de valores 0.
+Tras realizar una pequeña investigación, (https://es.wikipedia.org/wiki/%C3%81cidos_en_el_vino#%C3%81cido_c%C3%ADtrico) podemos deducir que en la uva, el ácido cítrico es un componente presente de forma natural pero con muy baja presencia, lo que si no se añade posteriormente puede presentar valores de 0.
+Consideramos que dicha variable tiene valores correctos y no requiere de ninguna acción.
+
+## Elementos duplicados
+Dado que no hay presentes registros con elementos vacios, vamos a verificar si hay registros duplicados.
+````{r }
+# Analizamos la existencia de registros duplicados.
+sum(duplicated(datos))
+```
+Algunas filas están duplicadas. A modo de ejemplo, la fila 1 y la fila 5 son la misma.
+````{r }
+# Ejemplo de registro duplicado
+a <- datos %>% filter(row_number() == 1) 
+b <- datos %>% filter(row_number() == 5)
+a == b
+```
+Los registros duplicados no nos dan más información sobre la muestra, por lo que vamos a eliminar las filas duplicadas.
+````{r }
+# Eliminamos los registros duplicados
+datos <- datos[!duplicated(datos), ]
+```
+````{r }
+# Revisamos el tamaño de nuestro nuevo dataset
+dim(datos)
+```
+## Valores extremos 
+Analizaremos individualmente cada una de las variables focalizándonos en la distribución de los datos y sus valores extremos.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$fixed.acidity, breaks  = 30)
+boxplot(datos$fixed.acidity,main="fixed.acidity", col="lightblue")
+boxplot.stats(datos$fixed.acidity)$out
+```
+Observamos como el atributo "fixed.acidity" tiene 41 valores extremos, distribuidos entre 12.4 y 16
+````{r }
+par(mfrow=c(1,2))
+hist(datos$volatile.acidity, breaks  = 30)
+boxplot(datos$volatile.acidity,main="volatile.acidity", col="lightblue")
+boxplot.stats(datos$volatile.acidity)$out
+```
+Observamos como el atributo "volatile.acidity" tiene 19 valores extremos, distribuidos entre 1 y 1.6
+````{r }
+par(mfrow=c(1,2))
+hist(datos$citric.acid , breaks  = 30)
+boxplot(datos$citric.acid ,main="citric.acid ", col="lightblue")
+boxplot.stats(datos$citric.acid )$out
+```
+Observamos como el atributo "citric.acid" tiene un valor extremo de valor 1.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$residual.sugar, breaks  = 30)
+boxplot(datos$residual.sugar,main="residual.sugar", col="lightblue")
+boxplot.stats(datos$residual.sugar)$out
+```
+Observamos como el atributo "residual.sugar" tiene 126 valores extremos, distribuidos entre 4 y 16
+````{r }
+par(mfrow=c(1,2))
+hist(datos$chlorides, breaks  = 50)
+boxplot(datos$chlorides,main="chlorides", col="lightblue")
+boxplot.stats(datos$chlorides)$out
+```
+Observamos como el atributo "chlorides" tiene 87 valores extremos, distribuidos entre 0 y 0.05 por la parte inferior y entre 0.12 y 0.6 por la parte superior.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$free.sulfur.dioxide, breaks  = 30)
+boxplot(datos$free.sulfur.dioxide,main="free.sulfur.dioxide", col="lightblue")
+boxplot.stats(datos$free.sulfur.dioxide)$out
+```
+Observamos como el atributo "free.sulfur.dioxide" tiene 26 valores extremos, distribuidos entre el 43 y el 60
+````{r }
+par(mfrow=c(1,2))
+hist(datos$total.sulfur.dioxide, breaks  = 30)
+boxplot(datos$total.sulfur.dioxide,main="total.sulfur.dioxide", col="lightblue")
+boxplot.stats(datos$total.sulfur.dioxide)$out
+```
+Observamos como el atributo "total.sulfur.dioxide" tiene 45 valores extremos, distribuidos entre el 120 y el 300.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$density, breaks  = 30)
+boxplot(datos$density,main="density", col="lightblue")
+boxplot.stats(datos$density)$out
+```
+Observamos como el atributo "density" tiene 35 valores extremos, distribuidos entre 0.990 y 0.992 por la parte inferior y entre 1.001 y 1.004 por la parte superior.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$pH, breaks  = 30)
+boxplot(datos$pH,main="pH", col="lightblue")
+boxplot.stats(datos$pH)$out
+```
+Observamos como el atributo "pH" tiene 28 valores extremos, distribuidos entre 2.7 y 2.9 por la parte inferior y entre 3.7 y 4 por la parte superior.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$sulphates, breaks  = 30)
+boxplot(datos$sulphates,main="sulphates", col="lightblue")
+boxplot.stats(datos$sulphates)$out
+```
+Observamos como el atributo "sulphates" tiene 55 valores extremos, distribuidos entre 1 y 2.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$alcohol, breaks  = 30)
+boxplot(datos$alcohol,main="alcohol", col="lightblue")
+boxplot.stats(datos$alcohol)$out
+```
+Observamos como el atributo "alcohol" tiene 12 valores extremos, distribuidos entre el 13.5 y el 14.
+````{r }
+par(mfrow=c(1,2))
+hist(datos$quality, breaks  = 30)
+boxplot(datos$quality,main="quality", col="lightblue")
+boxplot.stats(datos$quality)$out
+```
+Observamos como el atributo "quality" tiene 27 valores extremos, distribuidos entre el 3 por la parte inferior, y el 8 en la parte superior.
+Este valor es una valoración del vino, por lo que estos valores no se pueden considerar extremos.
+
+En conclusión, con el análisis realizado para cada variable, el número de valores extremos es muy dispar, siendo bajo en algunas variables y relativamente alto en otras.
+Como es posible que algunos valores extremos de una variable coincidan en registro con los de otra, para identificar correctamente los valores extremos vamos a utilizar la distancia de Cook, estimando el grado de influencia de cada uno de los valores al realizar un análisis de regresión por mínimos cuadrados.
+Para realizarlo, tendremos en cuenta todos los atributos a excepción de "quality".
+````{r }
+# Cálculo y visualización de resultados de aplicar la distancia de Cook a nuestros datos.
+outliers = c()
+for ( i in 1:11 ) {
+  stats = boxplot.stats(datos[[i]])$stats
+  bottom_outlier_rows = which(datos[[i]] < stats[1])
+  top_outlier_rows = which(datos[[i]] > stats[5])
+  outliers = c(outliers , top_outlier_rows[ !top_outlier_rows %in% outliers ] )
+  outliers = c(outliers , bottom_outlier_rows[ !bottom_outlier_rows %in% outliers ] )
+}
+mod = lm(quality ~ ., data = datos)
+cooksd = cooks.distance(mod)
+plot(cooksd, pch = "*", cex = 2, main = "Observaciones relevantes en función de la distancia de Cook")
+abline(h = 4*mean(cooksd, na.rm = T), col = "red")
+```
+````{r }
+# Obtenemos el listado de los valores extremos que afectan sensiblemente a los datos.
+head(datos[cooksd > 4 * mean(cooksd, na.rm=T), ])
+```
+Si visualizamos las primeras entradas, todos ellos tienen valores atípicos en una o más variables. 
+El registro 14 tiene los "chlorides" y los "sulphates" muy altos.
+El registro 34 tiene el "residual.sugar" muy alto.
+El registro 46 tiene el "pH" muy alto.
+El registro 80 tiene los "sulphates" altos.
+El registro 87 y 93 tienen los "chlorides", los "sulphates" y el "total.sulfur.dioxide" altos.
+
+
+Vamos a eliminar los valores extremos detectados.
+````{r }
+# Identificamos los registros a eliminar
+coutliers = as.numeric(rownames(datos[cooksd > 4 * mean(cooksd, na.rm=T), ]))
+outliers = c(outliers , coutliers[ !coutliers %in% outliers ] )
+
+# Eliminamos los elementos detectados como extremos.
+datos_clean = datos[-outliers, ]
+
+# Visualizamos el tamaño y los valores básicos de nuestro nuevo conjunto de datos.
+dim(datos_clean)
+summary(datos_clean)
+```
+
+# Análisis de los datos
+
+Antes de comenzar con el análisis guardaremos una copia de los datos después del proceso de limpieza
+````{r }
+# Exportación de los datos limpios en .csv
+write.csv(datos_clean, "winequality-red-clean.csv")
+```
+Analizaremos las variables frente a la calidad para decidir cuales utilizar en el resto del análisis
+````{r }
+#boxplot(datos$pH,main="quality", col="gray")
+boxplot(formula = datos_clean$fixed.acidity ~ datos_clean$quality, main="fixed.acidity vs quality", col="lightblue")
+boxplot(formula = datos_clean$volatile.acidity ~ datos_clean$quality, main="volatile.acidity vs quality", col="lightblue")
+boxplot(formula = datos_clean$citric.acid ~ datos_clean$quality, main="citric.acid vs quality", col="lightblue")
+boxplot(formula = datos_clean$residual.sugar ~ datos_clean$quality, main="residual.sugar vs quality", col="lightblue")
+boxplot(formula = datos_clean$chlorides ~ datos_clean$quality, main="chlorides vs quality", col="lightblue")
+boxplot(formula = datos_clean$free.sulfur.dioxide ~ datos_clean$quality, main="free.sulfur.dioxide vs quality", col="lightblue")
+boxplot(formula = datos_clean$total.sulfur.dioxide ~ datos_clean$quality, main="total.sulfur.dioxide vs quality", col="lightblue")
+boxplot(formula = datos_clean$density ~ datos_clean$quality, main="density vs quality", col="lightblue")
+boxplot(formula = datos_clean$pH ~ datos_clean$quality, main="pH vs quality", col="lightblue")
+boxplot(formula = datos_clean$sulphates ~ datos_clean$quality, main="sulphates vs quality", col="lightblue")
+boxplot(formula = datos_clean$alcohol ~ datos_clean$quality, main="alcohol vs quality", col="lightblue")
+```
+## Seleccion grupo de datos
+
+De la observación del grupo de datos nos interesa seleccionar los que pudieran tener una mayor relación con el resultado de calidad. Por ello vamos a seleccionar las que se intuye una cierta relación lineal para poder aplicar modelos de predicción.
+Las variables "fixed acidity", "citrix acid" , "alcohol" y "sulphates", conforme aumentan, aumenta el valor de la calidad. 
+Por el contrario para que aumente el valor de la calidad es necesario que disminuyan "volatile acidity", "density" y "pH".
+Crearemos un subconjunto de datos con estas cinco variables
+````{r }
+subdatos <- select(datos_clean, fixed.acidity, volatile.acidity, citric.acid, sulphates, alcohol)
+```
+
+
+## Comprobación de la normalidad y homogeneidad de la varianza.
+
+Existen diferentes maneras de comprobar la normalidad de los datos, la del test de Shapiro es la más habitual, pero también es posible realizar dicha comprobación de forma visual mediante los histogramas y las gráficas quantilie-quantile. Este método nos permite identificar más fácilmente las distribuciones que se alejan de la normalidad.
+````{r }
+# Gráficas QQ de comprobación de normalidad
+par(mfrow=c(3,2))
+for (i in 1:(ncol(datos_clean)-1)) {
+  hist(datos_clean[[i]], xlab = names(datos_clean)[i], col = 'lightblue', main = paste("Average =", signif(mean(datos_clean[[i]]),3)), breaks = 50)
+  qqnorm(datos_clean[,i], main = colnames(datos_clean[i]))
+  qqline(datos_clean[,i])
+  
+}
+```
+
+Los resultados gráficos nos indican que la mayoría de los atributos se acercan mucho a una distribución normal.
+*Agrupación de los resultados.
++ "fixed.acidity", "volatile.acidity", residual.sugar", "chlorides", "density" y "pH" tienen una distribución normal.
++ "citric.acid", free.sulfur" y "total.sulfur.dioxide" están ligeramente desviados en su parte superior de la gráfica de quantiles.
++ "alcohol" está desviado ligeramente en su parte inferior de la gráfica de quantiles.
+
+
+Una vez comprobada la normalidad de los datos, comentaremos el análisis de la varianza.
+
+Algunos test de análisis estadístico requieren de la homogeneidad de la varianza como premisa, por lo que en el caso de intentar responder preguntas concretas, sería necesario realizar dicho análisis.
+Si quisiéramos comparar la densidad entre calidades de vino, podríamos analizar la distribución de datos entre dos calidades concretas. Para ello utilizaremos primero una revisión visual, y posteriormente le pasaremos un Shariro Test, al tener los datos de densidad una distribución normal.
+
+
+````{r }
+# Visualización de las distribuciones de datos de densidad en función de la calidad del vino.
+calidad <- filter(.data = datos_clean, quality %in% c("3", "8"))
+ggplot(data = calidad, aes(x = quality, y = density, colour = quality, group=quality)) +
+  geom_boxplot() +
+  geom_point() +
+  theme_bw() +
+  theme(legend.position = "none")
+
+
+# Test que nos permite comprobar si se observan diferencias estadísticamente significativas de la densidad entre vinos de diferentes calidades escogidos.
+t.test(density ~ quality, data = calidad)
+
+```
+En este caso tenemos un valor de p-value mayor al nivel de significancia, lo que significa que no se observan diferencias estadísticamente significativas entre los grupos de datos de la calidad del vino para la variable densidad. En este escenario podríamos aplicar los diferentes test para responder las preguntas que nos planteamos sobre este subconjunto de datos.
+
+Nuestro objetivo es la predicción de la calidad del vino con los diferentes parámetros de sus componentes, por lo que que vamos a proseguir con el análisis de correlación de los datos.
+
+
+## Aplicación de pruebas estadísticas para comparar los grupos de datos
+
+Aplicaremos diversas pruebas estadísticas para analizar la relación de los datos y poder crear el modelo de predicción de la calidad.
+Comenzaremos por analizar los valores de correlación de las variables con la variable "quality"
+
+### Correlacion
+
+````{r }
+# Visualizaremos la matriz de correlacion de variables
+correlacion<-round(cor(datos_clean), 1)
+corrplot(correlacion, method="number", type="upper")
+```
+````{r }
+# Visualizaremos la matriz de correlacion de las variables seleccionadas anteriormente
+correlacion<-round(cor(subdatos), 1)
+corrplot(correlacion, method="number", type="upper")
+```
+Guardaremos los datos de correlación en una matriz ordenada para decir que variables utilizar en siguientes estudios.
+Dado que hemos observado que no siempre se cumple el criterio de homocedasticidad, vamos a utilizar la correlación de Spearman, ya que este método no conlleva ninguna suposición sobre la distribución de datos.
+
+````{r }
+# Creamos la matriz para almacenar los datos
+matrixcor <- matrix(nc = 2, nr = 0)
+colnames(matrixcor) <- c("Variable","correlacion")
+# Recorremos el dataset ejecutando el test
+for (i in 1:(ncol(datos_clean)-1)) {
+  
+  coef <- cor(x=datos_clean$quality, y = datos_clean[,i], method="spearman")
+  # Añadimos los datos a la matriz
+  pair = matrix(ncol = 2, nrow = 1)
+  pair[1][1] = colnames(datos_clean[i])
+  pair[2][1] = coef
+  matrixcor <- rbind(matrixcor, pair)
+}
+# Ordenamos por el valor de correlacion
+matrixcor[order(matrixcor[,"correlacion"]), ]
+
+```
+Observamos como algunos valores tiene una correlación positiva importante con la calidad del vino. Igualmente podemos observar como existen valores con una relevante correlación negativa, que también deben ser considerados.
+
+### Regresion lineal
+
+Con este grupo de datos y las relaciones observadas tanto en las gráficas de caja como los datos de correlación estimaremos por mínimos cuadrados ordinarios un modelo lineal que explique la variable "quality". Vamos a tener en cuenta todas las variables que tengan un valor de correlación superior a 0.2, tanto positivas como negativas.
+````{r }
+# Creamos el modelo 
+modelo <- (lm(formula = quality ~ 
+                alcohol +
+                sulphates +
+                citric.acid +
+                volatile.acidity +
+                density +
+                chlorides, 
+                data = datos_clean))
+summary(modelo)
+```
+Podemos observar que las variables "citric.acid", "density" y "chlorides" son variables poco significativas para el modelo. Con un valor de R cuadraddo ajustado del 37.65%. Si lo comparamos con la tabla de correlación, solo se han considerado las variables con un valor de correlación superior a 0.3
+````{r }
+# Creamos un modelo reducido 
+modelo_reducido <- (lm(formula = quality ~ 
+                                 alcohol +
+                                 sulphates +
+                                 volatile.acidity,
+                                 data = datos_clean))
+summary(modelo_reducido)
+```
+Como podemos observar, todas las variables utilizadas se consideran significativas, y la exclusión de las tres variables no significativas respecto al modelo anterior no ha supuesto una merma relevante en la calidad del modelo, con estas tres variables podemos explicar el 37.55% de la clasificación de quality.
+Finalmente, analizamos estadísticamente el modelo.
+````{r }
+par(mfrow=c(2,2))
+plot(modelo_reducido)
+```
+La gráfica de residuos frente a Fitted muestra si los residuos tienen patrones no lineales. Los residuos alrededor de una línea horizontal sin patrones distintos indican que tenemos relaciones lineales.
+La gráfica QQ plot normal muestra los residuos que se ajustan a la línea normal distribuidos.
+La grafica Scale-Location muestra si los residuos se distribuyen por igual a lo largo de los rangos de predictores de forma que podemos verificar el supuesto de varianza igual (homocedasticidad). Podemos observar una linea  horizontal con puntos de dispersión iguales.
+El gráfico de residuos vs apalancamiento tiene un aspecto típico cuando hay algún caso influyente. .
+
+
+### Regresión logistica
+
+Con el objetivo de tener un modelo que nos permitiera tener un control de calidad excluyente que nos permitiera decidir si el producto final es bueno o malo. Vamos a crear un modelo de regresión logística y compararemos resultados.
+````{r }
+# Creamo una variable calidad de tipo factor
+datos_clean$quality_factor <- as.factor(datos_clean$quality)
+
+# Creamos un variable calidad binomial
+datos_clean$category[datos_clean$quality <= 5] <- 0
+datos_clean$category[datos_clean$quality > 5] <- 1
+datos_clean$category <- as.factor(datos_clean$category)
+```
+
+
+````{r }
+# Generamos el modelo
+modelo_log <- glm(category ~ alcohol + sulphates + volatile.acidity, data = datos_clean, family = "binomial")
+summary(modelo_log)
+```
+
+
+Creamos la tabla de confusión correspondiente al modelo.
+```{r }
+library(vcd)
+predicciones <- ifelse(test = modelo_log$fitted.values > 0.5, yes = 1, no = 0)
+matriz_confusion <- table(modelo_log$model$category , predicciones, dnn = c("observaciones", "predicciones"))
+matriz_confusion
+```
+Visualizamos los resultados.
+```{r }
+mosaic(matriz_confusion, shade = T, colorize = T, gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2)))
+```
+El modelo de regresión logística nos ha dado un resultado de predicción de un 72% de acierto.
+Hemos de tener en cuenta que hemos simplificado la predicción a dos valores, considerando los vinos con puntuación de 5 o menos como malos y de más de 5 como buenos.
+En este caso, hemos entrenado el modelo con todos los datos y lo hemos evaluado sobre los mimos datos. 
+
+
+### Modelos de clasificacion
+
+También nos seria útil tener algún modelo de clasificación que pudiéramos determinar la calidad del vino en función de sus características. Podría agrupar los productos o producción en varios productos de venta, etc... Crearemos un modelo supervisado.
+
+
+## Arbol de decision
+
+Necesitaremos prepara los datos para crear un grupo de datos de entrenamiento y de prueba.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+# Copiamos los datos y eliminamos algunas columnas
+datos_arbol <- datos_clean
+datos_arbol$quality <- NULL 
+datos_arbol$quality_factor <- NULL 
+#datos_arbol$category <- NULL 
+
+
+# Creamos los conjuntos de datos de entrenamiento y de test.
+set.seed(666)
+datos_training <- sample_frac(datos_arbol, .7)
+datos_test <- setdiff(datos_arbol, datos_training)
+```
+
+Entrenamos el modelo basandonos en la variable categoria
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(rpart)
+library(rpart.plot)
+arbol <- rpart(formula = category~ ., data = datos_training)
+
+```
+
+Evaluando el modelo
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+arbol
+```
+
+Mostramos el arbol de desicion con la funcion plot
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+rpart.plot(arbol)
+```
+
+
+Creamos la matrix de confusion para evaluar el arbol.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(caret)
+prediccion <- predict(arbol, newdata = datos_test, type = "class")
+confusionMatrix(prediccion, datos_test[["category"]])
+
+```
+
+Vemos que la presicion del modelo es 69.73%. Con un valor del factor Kappa de 0.3946
+
+```
+
+# Representación de los resultados
+````{r }
+
+
+```
+
+
+# Resolución del problema
+````{r }
+
+
+```
