@@ -18,5 +18,4 @@ Este proyecto ha sido realizado conjuntamente por Eduardo Diaz e Ignasi Domingo 
 * documentacion practica.doc -> Documento preguntas de la practica
 * winequality-red.csv -> Fichero csv del dataset
 * winequality-red-clean.csv -> Fichero csv del dataser despues de la limpieza
-
-Readme
+* Readme
